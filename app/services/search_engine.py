@@ -55,9 +55,9 @@ class SearchEngine:
         for idx, score in ranked:
             if score > 0:
                 results.append({
-                    "title": self.notes[idx].title,
-                    "content": self.notes[idx].content,
-                    "score": score
-                })
-
+    "id": self.notes[idx].id,   # ADD THIS
+    "title": self.notes[idx].title,
+    "content": self.notes[idx].content,
+    "score": score
+})
         return results
