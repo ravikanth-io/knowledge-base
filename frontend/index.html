@@ -4,86 +4,105 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Knowledge Engine</title>
+<title>Cyber Knowledge Engine</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 
 <style>
 body {
-    background: radial-gradient(circle at 20% 20%, #0f172a, #020617);
+    background: linear-gradient(135deg, #020617, #0f172a);
 }
-.glass {
-    background: rgba(255,255,255,0.05);
-    backdrop-filter: blur(16px);
+
+/* Neon Glow */
+.neon {
+    box-shadow: 0 0 10px #0ea5e9, 0 0 20px #0ea5e9;
+}
+
+.neon-green {
+    box-shadow: 0 0 10px #22c55e, 0 0 20px #22c55e;
+}
+
+/* Card */
+.card {
+    background: rgba(255,255,255,0.03);
     border: 1px solid rgba(255,255,255,0.1);
-}
-.card:hover {
-    transform: scale(1.02);
+    backdrop-filter: blur(10px);
     transition: 0.3s;
+}
+
+.card:hover {
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: 0 0 25px rgba(14,165,233,0.4);
+}
+
+/* Glow text */
+.glow-text {
+    text-shadow: 0 0 10px #0ea5e9;
 }
 </style>
 
 </head>
 
-<body class="text-white min-h-screen flex flex-col items-center p-6">
+<body class="text-white min-h-screen p-6">
 
-<div class="w-full max-w-4xl">
+<div class="max-w-5xl mx-auto">
 
 ```
-<!-- HEADER -->
-<div class="text-center mb-8">
-    <h1 class="text-5xl font-bold">Knowledge Engine</h1>
-    <p class="text-gray-400 mt-2">Smart searchable knowledge system</p>
+<!-- Header -->
+<div class="text-center mb-10">
+    <h1 class="text-5xl font-bold glow-text">KNOWLEDGE ENGINE</h1>
+    <p class="text-gray-400 mt-2">Cyberpunk Search System</p>
 </div>
 
-<!-- LOGIN -->
-<div class="glass p-6 rounded-xl mb-6">
-    <h2 class="text-xl mb-3">Login</h2>
+<!-- Login -->
+<div class="card p-6 mb-6 rounded-xl neon">
+    <h2 class="text-xl mb-3">Access Terminal</h2>
 
     <input id="username" placeholder="Username"
-        class="w-full p-2 mb-2 rounded text-black">
+        class="w-full p-2 mb-2 rounded bg-black text-white">
 
-    <input id="password" type="password" placeholder="Password"
-        class="w-full p-2 mb-2 rounded text-black">
+    <input id="password" type="password"
+        class="w-full p-2 mb-2 rounded bg-black text-white">
 
     <button onclick="login()"
-        class="bg-purple-500 hover:bg-purple-600 px-4 py-2 w-full rounded">
-        Login
+        class="bg-blue-500 px-4 py-2 w-full rounded neon">
+        Authenticate
     </button>
 </div>
 
-<!-- ADD NOTE -->
-<div class="glass p-6 rounded-xl mb-6">
-    <h2 class="text-xl mb-3">Add / Edit Note</h2>
+<!-- Add Note -->
+<div class="card p-6 mb-6 rounded-xl neon">
+    <h2 class="text-xl mb-3">Inject Knowledge</h2>
 
     <input id="title" placeholder="Title"
-        class="w-full p-2 mb-2 rounded text-black">
+        class="w-full p-2 mb-2 rounded bg-black text-white">
 
-    <textarea id="content" placeholder="Content"
-        class="w-full p-2 mb-2 rounded text-black h-24"></textarea>
+    <textarea id="content"
+        class="w-full p-2 mb-2 rounded bg-black text-white h-24"></textarea>
 
     <button onclick="addNote()"
-        class="bg-blue-500 hover:bg-blue-600 px-4 py-2 w-full rounded">
-        Save Note
+        class="bg-purple-500 px-4 py-2 w-full rounded neon">
+        Save Data
     </button>
 </div>
 
-<!-- SEARCH -->
-<div class="glass p-6 rounded-xl mb-6">
-    <h2 class="text-xl mb-3">Search</h2>
+<!-- Search -->
+<div class="card p-6 mb-6 rounded-xl neon-green">
+    <h2 class="text-xl mb-3">Search Database</h2>
 
     <div class="flex gap-2">
-        <input id="query" placeholder="Search..."
-            class="flex-1 p-2 rounded text-black">
+        <input id="query"
+            class="flex-1 p-2 rounded bg-black text-white"
+            placeholder="Search...">
 
         <button onclick="searchNotes()"
-            class="bg-green-500 px-4 py-2 rounded">
-            Search
+            class="bg-green-500 px-4 py-2 rounded neon-green">
+            Scan
         </button>
     </div>
 </div>
 
-<!-- RESULTS -->
+<!-- Results -->
 <div id="results"></div>
 ```
 
@@ -97,30 +116,24 @@ let editingId = null;
 
 // LOGIN
 async function login() {
-    const username = document.getElementById("username").value;
-    const password = document.getElementById("password").value;
-
     const res = await fetch(`${API}/login`, {
         method: "POST",
         headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({username, password})
+        body: JSON.stringify({
+            username: document.getElementById("username").value,
+            password: document.getElementById("password").value
+        })
     });
 
     const data = await res.json();
     TOKEN = data.access_token;
-
-    alert("Logged in successfully");
+    alert("Access granted");
 }
 
-// ADD / EDIT NOTE
+// ADD / EDIT
 async function addNote() {
     const title = document.getElementById("title").value;
     const content = document.getElementById("content").value;
-
-    if (!title || !content) {
-        alert("Fill all fields");
-        return;
-    }
 
     if (editingId) {
         await fetch(`${API}/notes/${editingId}`, {
@@ -131,7 +144,6 @@ async function addNote() {
             },
             body: JSON.stringify({title, content})
         });
-
         editingId = null;
     } else {
         await fetch(`${API}/notes`, {
@@ -143,9 +155,6 @@ async function addNote() {
             body: JSON.stringify({title, content})
         });
     }
-
-    document.getElementById("title").value = "";
-    document.getElementById("content").value = "";
 
     searchNotes();
 }
@@ -160,17 +169,11 @@ async function searchNotes() {
     const resultsDiv = document.getElementById("results");
     resultsDiv.innerHTML = "";
 
-    if (!data.length) {
-        resultsDiv.innerHTML = "<p class='text-gray-400'>No results found</p>";
-        return;
-    }
-
     data.forEach(item => {
         resultsDiv.innerHTML += `
-            <div class="glass p-4 mb-4 rounded-xl card">
+            <div class="card p-4 mb-4 rounded-xl">
                 <h2 class="text-xl font-semibold">${item.title}</h2>
                 <p class="text-gray-300">${item.content}</p>
-                <small>Score: ${item.score.toFixed(3)}</small>
 
                 <div class="mt-2 flex gap-2">
                     <button onclick="editNote(${item.id}, '${item.title}', '${item.content}')"
