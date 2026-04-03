@@ -12,26 +12,13 @@
 body {
     background: radial-gradient(circle at 20% 20%, #0f172a, #020617);
 }
-
-/* Glass card */
 .glass {
     background: rgba(255,255,255,0.05);
     backdrop-filter: blur(16px);
     border: 1px solid rgba(255,255,255,0.1);
 }
-
-/* Neon glow */
-.glow-blue {
-    box-shadow: 0 0 25px rgba(59,130,246,0.5);
-}
-
-.glow-green {
-    box-shadow: 0 0 25px rgba(34,197,94,0.5);
-}
-
-/* Smooth hover */
-.card-hover:hover {
-    transform: scale(1.03);
+.card:hover {
+    transform: scale(1.02);
     transition: 0.3s;
 }
 </style>
@@ -43,53 +30,60 @@ body {
 <div class="w-full max-w-4xl">
 
 ```
-<!-- Header -->
-<div class="text-center mb-10">
-    <h1 class="text-5xl font-bold tracking-wide">
-        Knowledge Engine
-    </h1>
-    <p class="text-gray-400 mt-2">
-        Smart search powered by Python + FastAPI
-    </p>
+<!-- HEADER -->
+<div class="text-center mb-8">
+    <h1 class="text-5xl font-bold">Knowledge Engine</h1>
+    <p class="text-gray-400 mt-2">Smart searchable knowledge system</p>
 </div>
 
-<!-- Add Note -->
-<div class="glass p-6 rounded-xl mb-6 glow-blue">
-    <h2 class="text-xl mb-4 font-semibold">Add Knowledge</h2>
+<!-- LOGIN -->
+<div class="glass p-6 rounded-xl mb-6">
+    <h2 class="text-xl mb-3">Login</h2>
 
-    <input id="title" placeholder="Enter title..."
-        class="w-full p-3 mb-3 rounded bg-black/40 text-white outline-none">
+    <input id="username" placeholder="Username"
+        class="w-full p-2 mb-2 rounded text-black">
 
-    <textarea id="content" placeholder="Enter content..."
-        class="w-full p-3 mb-3 rounded bg-black/40 text-white h-24 outline-none"></textarea>
+    <input id="password" type="password" placeholder="Password"
+        class="w-full p-2 mb-2 rounded text-black">
 
-    <button onclick="addNote()"
-        class="bg-blue-500 hover:bg-blue-600 px-6 py-2 rounded w-full transition">
-        Add Note
+    <button onclick="login()"
+        class="bg-purple-500 hover:bg-purple-600 px-4 py-2 w-full rounded">
+        Login
     </button>
 </div>
 
-<!-- Search -->
-<div class="glass p-6 rounded-xl mb-6 glow-green">
-    <h2 class="text-xl mb-4 font-semibold">Search Knowledge</h2>
+<!-- ADD NOTE -->
+<div class="glass p-6 rounded-xl mb-6">
+    <h2 class="text-xl mb-3">Add / Edit Note</h2>
+
+    <input id="title" placeholder="Title"
+        class="w-full p-2 mb-2 rounded text-black">
+
+    <textarea id="content" placeholder="Content"
+        class="w-full p-2 mb-2 rounded text-black h-24"></textarea>
+
+    <button onclick="addNote()"
+        class="bg-blue-500 hover:bg-blue-600 px-4 py-2 w-full rounded">
+        Save Note
+    </button>
+</div>
+
+<!-- SEARCH -->
+<div class="glass p-6 rounded-xl mb-6">
+    <h2 class="text-xl mb-3">Search</h2>
 
     <div class="flex gap-2">
-        <input id="query" placeholder="Type to search..."
-            class="flex-1 p-3 rounded bg-black/40 text-white outline-none">
+        <input id="query" placeholder="Search..."
+            class="flex-1 p-2 rounded text-black">
 
         <button onclick="searchNotes()"
-            class="bg-green-500 hover:bg-green-600 px-6 py-2 rounded transition">
+            class="bg-green-500 px-4 py-2 rounded">
             Search
         </button>
     </div>
 </div>
 
-<!-- Loader -->
-<div id="loader" class="hidden text-center text-gray-400 mb-4">
-    Searching...
-</div>
-
-<!-- Results -->
+<!-- RESULTS -->
 <div id="results"></div>
 ```
 
@@ -98,104 +92,119 @@ body {
 <script>
 const API = "https://knowledge-base-api-ly0h.onrender.com";
 
-// Highlight words
-function highlight(text, query) {
-    if (!query) return text;
-    const words = query.split(" ");
-    words.forEach(word => {
-        const regex = new RegExp(`(${word})`, "gi");
-        text = text.replace(regex, "<span class='text-yellow-400'>$1</span>");
+let TOKEN = "";
+let editingId = null;
+
+// LOGIN
+async function login() {
+    const username = document.getElementById("username").value;
+    const password = document.getElementById("password").value;
+
+    const res = await fetch(`${API}/login`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({username, password})
     });
-    return text;
+
+    const data = await res.json();
+    TOKEN = data.access_token;
+
+    alert("Logged in successfully");
 }
 
-// Loader toggle
-function toggleLoader(show) {
-    document.getElementById("loader").classList.toggle("hidden", !show);
-}
-
-// Add Note
+// ADD / EDIT NOTE
 async function addNote() {
-    const title = document.getElementById("title").value.trim();
-    const content = document.getElementById("content").value.trim();
+    const title = document.getElementById("title").value;
+    const content = document.getElementById("content").value;
 
     if (!title || !content) {
-        alert("Please fill all fields");
+        alert("Fill all fields");
         return;
     }
 
-    toggleLoader(true);
-
-    try {
-        await fetch(`${API}/notes`, {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
+    if (editingId) {
+        await fetch(`${API}/notes/${editingId}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${TOKEN}`
+            },
             body: JSON.stringify({title, content})
         });
 
-        alert("Note added successfully");
-
-        document.getElementById("title").value = "";
-        document.getElementById("content").value = "";
-
-    } catch (err) {
-        alert("Error adding note");
+        editingId = null;
+    } else {
+        await fetch(`${API}/notes`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${TOKEN}`
+            },
+            body: JSON.stringify({title, content})
+        });
     }
 
-    toggleLoader(false);
+    document.getElementById("title").value = "";
+    document.getElementById("content").value = "";
+
+    searchNotes();
 }
 
-// Search Notes
+// SEARCH
 async function searchNotes() {
-    const query = document.getElementById("query").value.trim();
+    const query = document.getElementById("query").value;
 
-    if (!query) {
-        alert("Enter a search query");
+    const res = await fetch(`${API}/search?query=${query}`);
+    const data = await res.json();
+
+    const resultsDiv = document.getElementById("results");
+    resultsDiv.innerHTML = "";
+
+    if (!data.length) {
+        resultsDiv.innerHTML = "<p class='text-gray-400'>No results found</p>";
         return;
     }
 
-    toggleLoader(true);
+    data.forEach(item => {
+        resultsDiv.innerHTML += `
+            <div class="glass p-4 mb-4 rounded-xl card">
+                <h2 class="text-xl font-semibold">${item.title}</h2>
+                <p class="text-gray-300">${item.content}</p>
+                <small>Score: ${item.score.toFixed(3)}</small>
 
-    try {
-        const res = await fetch(`${API}/search?query=${query}`);
-        const data = await res.json();
+                <div class="mt-2 flex gap-2">
+                    <button onclick="editNote(${item.id}, '${item.title}', '${item.content}')"
+                        class="bg-yellow-500 px-2 py-1 rounded">
+                        Edit
+                    </button>
 
-        console.log("Search response:", data);
-
-        const resultsDiv = document.getElementById("results");
-        resultsDiv.innerHTML = "";
-
-        if (!data.length) {
-            resultsDiv.innerHTML = `
-                <p class="text-gray-400 text-center">
-                    No results found. Try different keywords.
-                </p>
-            `;
-            toggleLoader(false);
-            return;
-        }
-
-        data.forEach(item => {
-            resultsDiv.innerHTML += `
-                <div class="glass p-4 mb-4 rounded-xl card-hover">
-                    <h2 class="text-xl font-semibold mb-1">
-                        ${highlight(item.title, query)}
-                    </h2>
-                    <p class="text-gray-300 mb-2">
-                        ${highlight(item.content, query)}
-                    </p>
-                    <small class="text-gray-500">
-                        Score: ${item.score.toFixed(3)}
-                    </small>
+                    <button onclick="deleteNote(${item.id})"
+                        class="bg-red-500 px-2 py-1 rounded">
+                        Delete
+                    </button>
                 </div>
-            `;
-        });
+            </div>
+        `;
+    });
+}
 
-    } catch (err) {
-        alert("Error fetching results");
-    }
+// EDIT
+function editNote(id, title, content) {
+    document.getElementById("title").value = title;
+    document.getElementById("content").value = content;
+    editingId = id;
+}
 
-    toggleLoader(false);
+// DELETE
+async function deleteNote(id) {
+    await fetch(`${API}/notes/${id}`, {
+        method: "DELETE",
+        headers: {
+            "Authorization": `Bearer ${TOKEN}`
+        }
+    });
+
+    searchNotes();
 }
 </script>
 
