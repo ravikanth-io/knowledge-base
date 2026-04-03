@@ -4,109 +4,120 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cyber Knowledge Engine</title>
+<title>Knowledge Engine</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 
 <style>
 body {
-    background: linear-gradient(135deg, #020617, #0f172a);
+    background: #020617;
 }
 
-/* Neon Glow */
-.neon {
-    box-shadow: 0 0 10px #0ea5e9, 0 0 20px #0ea5e9;
+/* Layout */
+.container {
+    max-width: 1100px;
+    margin: auto;
 }
 
-.neon-green {
-    box-shadow: 0 0 10px #22c55e, 0 0 20px #22c55e;
-}
-
-/* Card */
+/* Cards */
 .card {
     background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.08);
     backdrop-filter: blur(10px);
-    transition: 0.3s;
 }
 
+/* Hover */
 .card:hover {
-    transform: translateY(-5px) scale(1.02);
-    box-shadow: 0 0 25px rgba(14,165,233,0.4);
+    transform: translateY(-4px);
+    transition: 0.25s;
 }
 
-/* Glow text */
-.glow-text {
-    text-shadow: 0 0 10px #0ea5e9;
+/* Buttons */
+.btn {
+    padding: 10px;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: 0.2s;
+}
+
+.btn-blue { background:#3b82f6; }
+.btn-green { background:#22c55e; }
+.btn-red { background:#ef4444; }
+.btn-yellow { background:#f59e0b; }
+
+/* Toast */
+#toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #111827;
+    padding: 12px 20px;
+    border-radius: 8px;
+    display: none;
 }
 </style>
 
 </head>
 
-<body class="text-white min-h-screen p-6">
+<body class="text-white">
 
-<div class="max-w-5xl mx-auto">
+<!-- NAVBAR -->
+
+<div class="border-b border-gray-800 p-4 flex justify-between">
+    <h1 class="text-xl font-bold">Knowledge Engine</h1>
+    <span class="text-gray-400 text-sm">FastAPI + Supabase</span>
+</div>
+
+<div class="container p-4">
 
 ```
-<!-- Header -->
-<div class="text-center mb-10">
-    <h1 class="text-5xl font-bold glow-text">KNOWLEDGE ENGINE</h1>
-    <p class="text-gray-400 mt-2">Cyberpunk Search System</p>
-</div>
-
-<!-- Login -->
-<div class="card p-6 mb-6 rounded-xl neon">
-    <h2 class="text-xl mb-3">Access Terminal</h2>
-
+<!-- LOGIN -->
+<div class="card p-4 mb-4 rounded-lg">
     <input id="username" placeholder="Username"
-        class="w-full p-2 mb-2 rounded bg-black text-white">
+        class="w-full p-2 mb-2 rounded text-black">
 
     <input id="password" type="password"
-        class="w-full p-2 mb-2 rounded bg-black text-white">
+        class="w-full p-2 mb-2 rounded text-black">
 
-    <button onclick="login()"
-        class="bg-blue-500 px-4 py-2 w-full rounded neon">
-        Authenticate
-    </button>
+    <button onclick="login()" class="btn btn-blue w-full">Login</button>
 </div>
 
-<!-- Add Note -->
-<div class="card p-6 mb-6 rounded-xl neon">
-    <h2 class="text-xl mb-3">Inject Knowledge</h2>
-
+<!-- ADD -->
+<div class="card p-4 mb-4 rounded-lg">
     <input id="title" placeholder="Title"
-        class="w-full p-2 mb-2 rounded bg-black text-white">
+        class="w-full p-2 mb-2 rounded text-black">
 
     <textarea id="content"
-        class="w-full p-2 mb-2 rounded bg-black text-white h-24"></textarea>
+        class="w-full p-2 mb-2 rounded text-black h-24"></textarea>
 
-    <button onclick="addNote()"
-        class="bg-purple-500 px-4 py-2 w-full rounded neon">
-        Save Data
+    <button onclick="addNote()" class="btn btn-blue w-full">
+        Save Note
     </button>
 </div>
 
-<!-- Search -->
-<div class="card p-6 mb-6 rounded-xl neon-green">
-    <h2 class="text-xl mb-3">Search Database</h2>
-
-    <div class="flex gap-2">
+<!-- SEARCH -->
+<div class="card p-4 mb-4 rounded-lg">
+    <div class="flex flex-col md:flex-row gap-2">
         <input id="query"
-            class="flex-1 p-2 rounded bg-black text-white"
+            class="flex-1 p-2 rounded text-black"
             placeholder="Search...">
 
         <button onclick="searchNotes()"
-            class="bg-green-500 px-4 py-2 rounded neon-green">
-            Scan
+            class="btn btn-green">
+            Search
         </button>
     </div>
 </div>
 
-<!-- Results -->
-<div id="results"></div>
+<!-- RESULTS -->
+<div id="results" class="grid gap-4"></div>
 ```
 
 </div>
+
+<!-- TOAST -->
+
+<div id="toast"></div>
 
 <script>
 const API = "https://knowledge-base-api-ly0h.onrender.com";
@@ -114,20 +125,28 @@ const API = "https://knowledge-base-api-ly0h.onrender.com";
 let TOKEN = "";
 let editingId = null;
 
+// Toast
+function showToast(msg) {
+    const t = document.getElementById("toast");
+    t.innerText = msg;
+    t.style.display = "block";
+    setTimeout(()=>t.style.display="none",2000);
+}
+
 // LOGIN
 async function login() {
     const res = await fetch(`${API}/login`, {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({
-            username: document.getElementById("username").value,
-            password: document.getElementById("password").value
+            username: username.value,
+            password: password.value
         })
     });
 
     const data = await res.json();
     TOKEN = data.access_token;
-    alert("Access granted");
+    showToast("Logged in");
 }
 
 // ADD / EDIT
@@ -135,58 +154,44 @@ async function addNote() {
     const title = document.getElementById("title").value;
     const content = document.getElementById("content").value;
 
-    if (editingId) {
-        await fetch(`${API}/notes/${editingId}`, {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${TOKEN}`
-            },
-            body: JSON.stringify({title, content})
-        });
-        editingId = null;
-    } else {
-        await fetch(`${API}/notes`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${TOKEN}`
-            },
-            body: JSON.stringify({title, content})
-        });
-    }
+    const method = editingId ? "PUT" : "POST";
+    const url = editingId ? `${API}/notes/${editingId}` : `${API}/notes`;
 
+    await fetch(url, {
+        method,
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${TOKEN}`
+        },
+        body: JSON.stringify({title, content})
+    });
+
+    editingId = null;
+    showToast("Saved");
     searchNotes();
 }
 
 // SEARCH
 async function searchNotes() {
-    const query = document.getElementById("query").value;
-
-    const res = await fetch(`${API}/search?query=${query}`);
+    const res = await fetch(`${API}/search?query=${query.value}`);
     const data = await res.json();
 
-    const resultsDiv = document.getElementById("results");
-    resultsDiv.innerHTML = "";
+    results.innerHTML = "";
 
     data.forEach(item => {
-        resultsDiv.innerHTML += `
-            <div class="card p-4 mb-4 rounded-xl">
-                <h2 class="text-xl font-semibold">${item.title}</h2>
-                <p class="text-gray-300">${item.content}</p>
+        results.innerHTML += `
+        <div class="card p-4 rounded-lg">
+            <h2 class="text-lg font-semibold">${item.title}</h2>
+            <p class="text-gray-300">${item.content}</p>
 
-                <div class="mt-2 flex gap-2">
-                    <button onclick="editNote(${item.id}, '${item.title}', '${item.content}')"
-                        class="bg-yellow-500 px-2 py-1 rounded">
-                        Edit
-                    </button>
+            <div class="mt-2 flex gap-2 flex-wrap">
+                <button onclick="editNote(${item.id}, '${item.title}', '${item.content}')"
+                    class="btn btn-yellow">Edit</button>
 
-                    <button onclick="deleteNote(${item.id})"
-                        class="bg-red-500 px-2 py-1 rounded">
-                        Delete
-                    </button>
-                </div>
+                <button onclick="deleteNote(${item.id})"
+                    class="btn btn-red">Delete</button>
             </div>
+        </div>
         `;
     });
 }
@@ -202,11 +207,10 @@ function editNote(id, title, content) {
 async function deleteNote(id) {
     await fetch(`${API}/notes/${id}`, {
         method: "DELETE",
-        headers: {
-            "Authorization": `Bearer ${TOKEN}`
-        }
+        headers: { "Authorization": `Bearer ${TOKEN}` }
     });
 
+    showToast("Deleted");
     searchNotes();
 }
 </script>
