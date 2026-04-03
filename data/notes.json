@@ -1,0 +1,12 @@
+[
+    {
+        "id": 1,
+        "title": "Python Basics",
+        "content": "Python supports OOP and functions"
+    },
+    {
+        "id": 2,
+        "title": "FastAPI",
+        "content": "FastAPI is used for building APIs"
+    }
+]

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Knowledge Base</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white p-10">
+
+    <h1 class="text-3xl font-bold mb-6">Personal Knowledge Base</h1>
+
+    <!-- Add Note -->
+    <div class="mb-6">
+        <input id="title" placeholder="Title" class="p-2 text-black mr-2">
+        <input id="content" placeholder="Content" class="p-2 text-black mr-2">
+        <button onclick="addNote()" class="bg-blue-500 px-4 py-2">Add</button>
+    </div>
+
+    <!-- Search -->
+    <div class="mb-6">
+        <input id="query" placeholder="Search..." class="p-2 text-black mr-2">
+        <button onclick="searchNotes()" class="bg-green-500 px-4 py-2">Search</button>
+    </div>
+
+    <!-- Results -->
+    <div id="results"></div>
+
+<script>
+const API = "http://127.0.0.1:8000"; // change after deploy
+
+async function addNote() {
+    const title = document.getElementById("title").value;
+    const content = document.getElementById("content").value;
+
+    await fetch(`${API}/notes`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({title, content})
+    });
+
+    alert("Note added");
+}
+
+async function searchNotes() {
+    const query = document.getElementById("query").value;
+
+    const res = await fetch(`${API}/search?query=${query}`);
+    const data = await res.json();
+
+    const resultsDiv = document.getElementById("results");
+    resultsDiv.innerHTML = "";
+
+    data.forEach(item => {
+        resultsDiv.innerHTML += `
+            <div class="bg-gray-800 p-4 mb-2">
+                <h2 class="text-xl">${item.title}</h2>
+                <p>${item.content}</p>
+                <small>Score: ${item.score.toFixed(3)}</small>
+            </div>
+        `;
+    });
+}
+</script>
+
+</body>
+</html>
