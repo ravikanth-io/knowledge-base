@@ -2,58 +2,72 @@
 
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Knowledge Base</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Knowledge Base</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+body {
+    background: radial-gradient(circle at top, #0f172a, #020617);
+}
+
+.glass {
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.glow {
+    box-shadow: 0 0 20px rgba(59,130,246,0.3);
+}
+</style>
+
 </head>
 
-<body class="bg-gradient-to-br from-gray-900 to-gray-800 text-white min-h-screen flex flex-col items-center p-6">
+<body class="text-white min-h-screen flex items-center justify-center p-6">
 
-<div class="w-full max-w-3xl">
+<div class="w-full max-w-4xl">
 
 ```
-<!-- Header -->
-<h1 class="text-4xl font-bold text-center mb-2">
-    Personal Knowledge Base
+<!-- Title -->
+<h1 class="text-5xl font-bold text-center mb-2 tracking-wide">
+    Knowledge Engine
 </h1>
-
-<p class="text-center text-gray-400 mb-8">
-    Intelligent search powered by Python, FastAPI, and TF-IDF
+<p class="text-center text-gray-400 mb-10">
+    Intelligent note search powered by AI-like ranking
 </p>
 
-<!-- Add Note Card -->
-<div class="bg-gray-800 p-5 rounded-xl shadow mb-6">
-    <h2 class="text-xl font-semibold mb-3">Add Note</h2>
+<!-- Add Note -->
+<div class="glass p-6 rounded-xl mb-6 glow">
+    <h2 class="text-xl mb-4 font-semibold">Add Knowledge</h2>
 
     <input id="title" placeholder="Title"
-        class="p-2 text-black w-full mb-3 rounded">
+        class="w-full p-3 mb-3 rounded bg-black/40 text-white">
 
     <textarea id="content" placeholder="Content"
-        class="p-2 text-black w-full mb-3 rounded h-24"></textarea>
+        class="w-full p-3 mb-3 rounded bg-black/40 text-white h-24"></textarea>
 
     <button onclick="addNote()"
-        class="bg-blue-500 hover:bg-blue-600 px-4 py-2 w-full rounded font-medium">
+        class="bg-blue-500 hover:bg-blue-600 px-6 py-2 rounded w-full transition">
         Add Note
     </button>
 </div>
 
-<!-- Search Card -->
-<div class="bg-gray-800 p-5 rounded-xl shadow mb-6">
-    <h2 class="text-xl font-semibold mb-3">Search</h2>
+<!-- Search -->
+<div class="glass p-6 rounded-xl mb-6">
+    <h2 class="text-xl mb-4 font-semibold">Search</h2>
 
-    <input id="query" placeholder="Search your notes..."
-        class="p-2 text-black w-full mb-3 rounded">
+    <div class="flex gap-2">
+        <input id="query" placeholder="Search knowledge..."
+            class="flex-1 p-3 rounded bg-black/40 text-white">
 
-    <button onclick="searchNotes()"
-        class="bg-green-500 hover:bg-green-600 px-4 py-2 w-full rounded font-medium">
-        Search
-    </button>
-</div>
-
-<!-- Loader -->
-<div id="loader" class="hidden text-center text-gray-400 mb-4">
-    Loading...
+        <button onclick="searchNotes()"
+            class="bg-green-500 hover:bg-green-600 px-6 py-2 rounded transition">
+            Search
+        </button>
+    </div>
 </div>
 
 <!-- Results -->
@@ -65,34 +79,21 @@
 <script>
 const API = "https://knowledge-base-api-ly0h.onrender.com";
 
-// Highlight keywords
+// Highlight
 function highlight(text, query) {
     if (!query) return text;
-
     const words = query.split(" ");
     words.forEach(word => {
         const regex = new RegExp(`(${word})`, "gi");
-        text = text.replace(regex, "<mark class='bg-yellow-300 text-black'>$1</mark>");
+        text = text.replace(regex, "<span class='text-yellow-400'>$1</span>");
     });
     return text;
 }
 
-// Show loader
-function toggleLoader(show) {
-    document.getElementById("loader").classList.toggle("hidden", !show);
-}
-
 // Add Note
 async function addNote() {
-    const title = document.getElementById("title").value.trim();
-    const content = document.getElementById("content").value.trim();
-
-    if (!title || !content) {
-        alert("Please fill all fields");
-        return;
-    }
-
-    toggleLoader(true);
+    const title = document.getElementById("title").value;
+    const content = document.getElementById("content").value;
 
     await fetch(`${API}/notes`, {
         method: "POST",
@@ -100,38 +101,29 @@ async function addNote() {
         body: JSON.stringify({title, content})
     });
 
-    toggleLoader(false);
-
-    alert("Note added successfully");
-
-    document.getElementById("title").value = "";
-    document.getElementById("content").value = "";
+    alert("Added successfully");
 }
 
-// Search Notes
+// Search
 async function searchNotes() {
-    const query = document.getElementById("query").value.trim();
-
-    toggleLoader(true);
+    const query = document.getElementById("query").value;
 
     const res = await fetch(`${API}/search?query=${query}`);
     const data = await res.json();
 
-    toggleLoader(false);
+    console.log(data);
 
     const resultsDiv = document.getElementById("results");
     resultsDiv.innerHTML = "";
 
-    if (data.length === 0) {
-        resultsDiv.innerHTML = `
-            <p class="text-gray-400 text-center">No results found</p>
-        `;
+    if (!data.length) {
+        resultsDiv.innerHTML = "<p class='text-gray-400'>No results found</p>";
         return;
     }
 
     data.forEach(item => {
         resultsDiv.innerHTML += `
-            <div class="bg-gray-800 p-4 mb-3 rounded-xl shadow hover:scale-[1.01] transition">
+            <div class="glass p-4 mb-4 rounded-xl hover:scale-[1.02] transition">
                 <h2 class="text-xl font-semibold mb-1">
                     ${highlight(item.title, query)}
                 </h2>
@@ -139,7 +131,7 @@ async function searchNotes() {
                     ${highlight(item.content, query)}
                 </p>
                 <small class="text-gray-500">
-                    Relevance Score: ${item.score.toFixed(3)}
+                    Score: ${item.score.toFixed(3)}
                 </small>
             </div>
         `;
